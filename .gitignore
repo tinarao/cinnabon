@@ -1,2 +1,6 @@
 *.env
 *.db
+bin/
+*.sqlite
+bin/cinnabon
+cinnabon

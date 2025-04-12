@@ -1,5 +1,5 @@
 # Переменные
-BINARY_NAME=bin/cinnabon
+BINARY_NAME=cinnabon
 MAIN_FILE=cmd/main.go
 
 run: build
