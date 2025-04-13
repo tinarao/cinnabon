@@ -4,3 +4,4 @@ bin/
 *.sqlite
 bin/cinnabon
 cinnabon
+.vscode

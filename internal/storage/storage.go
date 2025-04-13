@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
-	"log"
 
 	_ "modernc.org/sqlite"
 )
@@ -15,17 +14,18 @@ var ddl string
 var Conn *sql.DB
 var Q *Queries
 
-func Init() {
+func Init() error {
 	ctx := context.Background()
 	var err error
 	Conn, err = sql.Open("sqlite", "./db.sqlite")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if _, err := Conn.ExecContext(ctx, ddl); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	Q = New(Conn)
+	return nil
 }

@@ -10,20 +10,21 @@ import (
 )
 
 type Session struct {
-	ID        int64
-	ForeignID string
-	UserID    int64
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	ID        int64     `json:"id"`
+	Hash      string    `json:"hash"`
+	UserID    int64     `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type User struct {
-	ID        int64
-	Email     string
-	Username  sql.NullString
-	FirstName sql.NullString
-	LastName  sql.NullString
-	Password  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        int64          `json:"id"`
+	Email     string         `json:"email"`
+	Username  sql.NullString `json:"username"`
+	ForeignID sql.NullString `json:"foreign_id"`
+	FirstName sql.NullString `json:"first_name"`
+	LastName  sql.NullString `json:"last_name"`
+	Password  string         `json:"password"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }

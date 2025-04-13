@@ -8,20 +8,41 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
+const createSession = `-- name: CreateSession :one
+INSERT INTO sessions (user_id, hash, expires_at)
+VALUES (?, ?, ?)
+RETURNING hash
+`
+
+type CreateSessionParams struct {
+	UserID    int64     `json:"user_id"`
+	Hash      string    `json:"hash"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, createSession, arg.UserID, arg.Hash, arg.ExpiresAt)
+	var hash string
+	err := row.Scan(&hash)
+	return hash, err
+}
+
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (email, username, first_name, last_name, password)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO users (email, username, first_name, last_name, password, foreign_id)
+VALUES (?, ?, ?, ?, ?, ?)
 RETURNING id
 `
 
 type CreateUserParams struct {
-	Email     string
-	Username  sql.NullString
-	FirstName sql.NullString
-	LastName  sql.NullString
-	Password  string
+	Email     string         `json:"email"`
+	Username  sql.NullString `json:"username"`
+	FirstName sql.NullString `json:"first_name"`
+	LastName  sql.NullString `json:"last_name"`
+	Password  string         `json:"password"`
+	ForeignID sql.NullString `json:"foreign_id"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (int64, error) {
@@ -31,14 +52,84 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (int64, 
 		arg.FirstName,
 		arg.LastName,
 		arg.Password,
+		arg.ForeignID,
 	)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
 }
 
+const deleteSessionByHash = `-- name: DeleteSessionByHash :exec
+DELETE FROM sessions WHERE hash = ?
+`
+
+func (q *Queries) DeleteSessionByHash(ctx context.Context, hash string) error {
+	_, err := q.db.ExecContext(ctx, deleteSessionByHash, hash)
+	return err
+}
+
+const deleteSessionById = `-- name: DeleteSessionById :exec
+DELETE FROM sessions WHERE id = ?
+`
+
+func (q *Queries) DeleteSessionById(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteSessionById, id)
+	return err
+}
+
+const getSessionByHash = `-- name: GetSessionByHash :one
+SELECT id, hash, user_id, created_at, expires_at FROM sessions WHERE hash = ?
+`
+
+func (q *Queries) GetSessionByHash(ctx context.Context, hash string) (Session, error) {
+	row := q.db.QueryRowContext(ctx, getSessionByHash, hash)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.Hash,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+	)
+	return i, err
+}
+
+const getSessionByID = `-- name: GetSessionByID :one
+SELECT id, hash, user_id, created_at, expires_at FROM sessions WHERE id = ?
+`
+
+func (q *Queries) GetSessionByID(ctx context.Context, id int64) (Session, error) {
+	row := q.db.QueryRowContext(ctx, getSessionByID, id)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.Hash,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+	)
+	return i, err
+}
+
+const getSessionByUserID = `-- name: GetSessionByUserID :one
+SELECT id, hash, user_id, created_at, expires_at FROM sessions WHERE user_id = ?
+`
+
+func (q *Queries) GetSessionByUserID(ctx context.Context, userID int64) (Session, error) {
+	row := q.db.QueryRowContext(ctx, getSessionByUserID, userID)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.Hash,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+	)
+	return i, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, username, first_name, last_name, password, created_at, updated_at FROM users WHERE email = ?
+SELECT id, email, username, foreign_id, first_name, last_name, password, created_at, updated_at FROM users WHERE email = ?
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -48,6 +139,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.ID,
 		&i.Email,
 		&i.Username,
+		&i.ForeignID,
 		&i.FirstName,
 		&i.LastName,
 		&i.Password,
@@ -58,7 +150,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, username, first_name, last_name, password, created_at, updated_at FROM users WHERE id = ?
+SELECT id, email, username, foreign_id, first_name, last_name, password, created_at, updated_at FROM users WHERE id = ?
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
@@ -68,6 +160,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.ID,
 		&i.Email,
 		&i.Username,
+		&i.ForeignID,
 		&i.FirstName,
 		&i.LastName,
 		&i.Password,

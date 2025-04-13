@@ -1,19 +1,33 @@
 package sessions
 
-import "time"
+import (
+	"cinnabon/internal/storage"
+	"context"
+	"errors"
+	"log/slog"
+	"time"
 
-type Session struct {
-	ID        uint      `json:"id"`
-	ForeignID string    `json:"foreign_id"`
-	UserID    uint      `json:"user_id"`
-	CreatedAt time.Time `json:"created_at"`
-	ExpiresAt time.Time `json:"expires_at"`
+	"github.com/google/uuid"
+)
+
+const MAX_AGE = time.Hour * 24 * 30 // 30 days
+
+func generateSessionID() string {
+	uuid := uuid.New()
+	return uuid.String()
 }
 
-func New() *Session {
-	return &Session{}
-}
+func New(userID int64) (hash string, err error) {
+	h := generateSessionID()
+	_, e := storage.Q.CreateSession(context.Background(), storage.CreateSessionParams{
+		UserID:    userID,
+		ExpiresAt: time.Now().Add(MAX_AGE),
+		Hash:      h,
+	})
+	if e != nil {
+		slog.Error("failed to create session", "error", e)
+		return "", errors.New("failed to create session")
+	}
 
-func (s *Session) IsExpired() bool {
-	return s.ExpiresAt.Before(time.Now())
+	return h, nil
 }
