@@ -21,21 +21,17 @@ jobs:
         with:
           go-version: '1.21'
           
+      - name: Install gocover-cobertura
+        run: go install github.com/boumenot/gocover-cobertura@latest
+          
       - name: Run tests with coverage
         run: |
           go test -coverprofile=coverage.out ./...
+          gocover-cobertura < coverage.out > coverage.xml
           go tool cover -func=coverage.out
           
-      - name: Generate coverage badge
-        uses: jsmrcaga/action-coverage-badge@v1
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
         with:
-          coverage_file: coverage.out
-          output_file: coverage.svg
-          
-      - name: Commit coverage badge
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add coverage.svg
-          git commit -m "Update coverage badge" || true
-          git push 
+          name: coverage-report
+          path: coverage.xml 
