@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"os"
 
 	_ "modernc.org/sqlite"
 )
@@ -28,4 +29,29 @@ func Init() error {
 
 	Q = New(Conn)
 	return nil
+}
+
+func SetupTestDB() {
+	dbFile := "test.db"
+	os.Remove(dbFile)
+
+	conn, err := sql.Open("sqlite", dbFile)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = conn.ExecContext(context.Background(), ddl)
+	if err != nil {
+		panic(err)
+	}
+
+	Conn = conn
+	Q = New(conn)
+}
+
+func TeardownTestDB() {
+	if Conn != nil {
+		Conn.Close()
+	}
+	os.Remove("test.db")
 }

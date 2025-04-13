@@ -116,7 +116,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
-		MaxAge:   int(sessions.MAX_AGE.Seconds()),
 	})
 
 	sendJSON(w, AuthResponse{
@@ -163,7 +162,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 func Logout(w http.ResponseWriter, r *http.Request) {
 	sessionID, err := getSessionIdFromHeader(r)
 	if err != nil {
-		sendError(w, err.Error(), http.StatusBadRequest)
+		sendError(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	_, err = sessions.GetUserBySessionHash(sessionID)
+	if err != nil {
+		sendError(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 

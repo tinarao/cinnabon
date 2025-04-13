@@ -31,3 +31,26 @@ func New(userID int64) (hash string, err error) {
 
 	return h, nil
 }
+
+func GetSessionByHash(hash string) (userID int64, err error) {
+	session, err := storage.Q.GetSessionByHash(context.Background(), hash)
+	if err != nil {
+		return 0, errors.New("failed to get session")
+	}
+
+	return session.UserID, nil
+}
+
+func GetUserBySessionHash(hash string) (userID int64, err error) {
+	userID, err = GetSessionByHash(hash)
+	if err != nil {
+		return 0, errors.New("failed to get user by session hash")
+	}
+
+	user, err := storage.Q.GetUserByID(context.Background(), userID)
+	if err != nil {
+		return 0, errors.New("failed to get user by session hash")
+	}
+
+	return user.ID, nil
+}
