@@ -9,8 +9,7 @@ import (
 )
 
 func main() {
-	c := config.New("Secret", ":8080")
-	c.Load()
+	cfg := config.New()
 
 	if err := storage.Init(); err != nil {
 		slog.Error("failed to initialize storage", "error", err.Error())
@@ -19,6 +18,6 @@ func main() {
 
 	defer storage.Conn.Close()
 
-	server := server.New(c.Port)
+	server := server.New(cfg.GetPort())
 	server.Start()
 }

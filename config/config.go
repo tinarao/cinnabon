@@ -1,27 +1,45 @@
 package config
 
-import "github.com/joho/godotenv"
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
 
 type Config struct {
-	Secret string
-	Port   string // Default value is ":8080"
+	secret string
+	port   string // Default value - ":8080"
 }
 
-// New returns the new Config instance.
-func New(secret string, port string) *Config {
+func New() *Config {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	secret := os.Getenv("SECRET")
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = ":8080"
+	}
+
+	if secret == "" {
+		log.Fatal("SECRET is not set")
+	}
+
 	c := &Config{
-		Secret: secret,
-		Port:   port,
+		secret: secret,
+		port:   port,
 	}
 
 	return c
 }
 
-func (c *Config) Load() error {
-	err := godotenv.Load()
-	if err != nil {
-		return err
-	}
+func (c *Config) GetSecret() string {
+	return c.secret
+}
 
-	return nil
+func (c *Config) GetPort() string {
+	return c.port
 }
